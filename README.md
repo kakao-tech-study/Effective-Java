@@ -5,7 +5,7 @@
 
 
 ## 🧑‍🤝‍🧑 팀원 소개
-<div align="center">https://avatars.githubusercontent.com/u/51540711?v=4
+<div >
  <table>
    <tr>
      <td align="center" width="25%">
