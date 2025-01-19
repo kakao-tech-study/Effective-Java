@@ -5,12 +5,12 @@
 
 
 ## 🧑‍🤝‍🧑 팀원 소개
-<div align="center">
+<div align="center">https://avatars.githubusercontent.com/u/51540711?v=4
  <table>
    <tr>
      <td align="center" width="25%">
-       <img src="" width="100" height="100" alt="김송목 프로필"><br>
-       <a href="" target="_blank">김송목</a><br>
+       <img src="https://avatars.githubusercontent.com/u/51540711?v=4" width="100" height="100" alt="김송목 프로필"><br>
+       <a href="https://github.com/kimsongmok" target="_blank">김송목</a><br>
      </td>
 <td align="center" width="25%">
        <img src="https://avatars.githubusercontent.com/u/159447466?v=4" width="100" height="100" alt="모아림 프로필"><br>
