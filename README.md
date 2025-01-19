@@ -14,7 +14,7 @@
      </td>
 <td align="center" width="25%">
        <img src="https://avatars.githubusercontent.com/u/159447466?v=4" width="100" height="100" alt="모아림 프로필"><br>
-       <a href="https://github.com/JaeBin2019" target="_blank">모아림</a><br>
+       <a href="https://github.com/ariimo" target="_blank">모아림</a><br>
      </td>
 <td align="center" width="25%">
        <img src="https://avatars.githubusercontent.com/u/76200940?v=4" width="100" height="100" alt="윤정훈 프로필"><br>
