@@ -1,0 +1,182 @@
+# 싱글턴
+
+싱글턴이란 인스턴스를 오직 하나만 생성할 수 있는 클래스를 말한다.
+
+## 싱글턴을 사용하는 경우
+
+### 1. 무상태(stateless) 객체
+
+#### 무상태 객체란?
+
+무상태 객체는 **어떤 데이터도 내부에 저장하지 않고**, 주어진 입력값만으로 결과를 계산하거나 작업을 수행하는 객체예요. 즉, 상태(변수나 데이터)가 없기 때문에 호출할 때마다 항상 같은 동작을 수행합니다.
+
+#### 왜 싱글턴을 사용할까?
+
+무상태 객체는 **동일한 일을 반복적으로 수행**하는데, 내부 상태(변수)가 없으니 굳이 여러 개의 객체를 만들 필요가 없어요. 하나의 객체를 만들어 모든 곳에서 사용하면 메모리도 아끼고 코드도 단순화할 수 있죠.
+
+- **예:** 로그 기록기
+
+---
+
+### 2. 설계상 유일해야 하는 시스템 컴포넌트
+
+하나의 시스템에는 **단 하나의 데이터베이스 연결 관리자만 있어야 한다거나** 프로그램 설정이나 환경 변수는 **한 곳에서만 관리되어야 한다.** 이렇게 중복되면 안 되는 시스템 컴포넌트가 존재할 수 있다.
+
+---
+
+## 싱글턴을 만드는 방식
+
+### 1. public static 멤버가 final 필드인 방식
+
+```java
+public class Elvis {
+    public static final Elvis INSTANCE = new Elvis();
+    private Elvis() { ... }
+    
+    public void leaveTheBuilding() { ... }
+}
+private 생성자는 Elvis.INSTANCE를 초기화할 때 딱 한 번 호출됩니다.
+public, protected 생성자가 없으므로 인스턴스가 1개임이 보장됩니다.
+⚠️ 예외
+권한이 있는 클라이언트는 리플렉션 API AccessibleObject.setAccessible을 사용해 private 생성자를 호출할 수 있습니다.
+
+해결책: 생성자를 수정해 두 번째 객체를 생성하는 경우 예외를 던지기
+
+리플렉션 API란?
+리플렉션 API는 자바에서 클래스, 메서드, 필드, 생성자 등에 대한 정보를 얻고, 이를 조작할 수 있는 강력한 도구입니다. AccessibleObject.setAccessible(true)를 사용하면 private 멤버에도 접근할 수 있습니다.
+즉, 외부에서 리플렉션을 사용하여 private 생성자를 호출하면 싱글턴 객체가 여러 개 생성될 수 있는 상황이 발생합니다.
+
+java
+
+복사
+import java.lang.reflect.Constructor;
+
+public class ReflectionTest {
+    public static void main(String[] args) throws Exception {
+        // 이미 하나 생성
+        Singleton instance1 = Singleton.INSTANCE;
+
+        // 리플렉션을 사용해 private 생성자에 접근
+        Constructor<Singleton> constructor = Singleton.class.getDeclaredConstructor();
+        constructor.setAccessible(true); // private 생성자 접근 허용
+        Singleton instance2 = constructor.newInstance(); // 새로운 인스턴스 생성
+
+        // 두 인스턴스 비교
+        System.out.println(instance1 == instance2); // false (서로 다른 객체)
+    }
+}
+🍀 장점
+해당 클래스가 싱글턴임이 API에 명백히 드러남.
+간결함.
+2. 정적 팩터리 메서드를 public static 멤버로 제공
+java
+
+복사
+public class Elvis {
+    private static final Elvis INSTANCE = new Elvis();
+    private Elvis() { ... }
+    
+    public static Elvis getInstance() { return INSTANCE; }
+    public void leaveTheBuilding() { ... }
+}
+Elvis.getInstance()는 항상 같은 객체의 참조를 반환합니다.
+⚠️ 예외
+권한이 있는 클라이언트는 리플렉션 API AccessibleObject.setAccessible을 사용해 private 생성자를 호출할 수 있습니다.
+
+해결책: 생성자를 수정해 두 번째 객체를 생성하는 경우 예외를 던지기
+
+🍀 장점
+API를 바꾸지 않고도 싱글턴이 아니도록 변경할 수 있습니다.
+예: return new Elvis();
+원한다면 정적 팩터리를 제네릭 싱글턴 팩터리로 만들 수 있습니다.
+정적 팩터리의 메서드 참조를 공급자(supplier)로 사용할 수 있습니다.
+예: Elvis::getInstance = Supplier<Elvis>
+1번, 2번 방법의 문제
+직렬화된 인스턴스를 역직렬화할 때마다 새로운 인스턴스가 만들어진다.
+
+직렬화와 역직렬화란?
+직렬화(Serialization): 객체를 바이트 스트림으로 변환하여 파일, 네트워크 등을 통해 저장하거나 전송할 수 있도록 만드는 과정입니다.
+역직렬화(Deserialization): 바이트 스트림을 다시 객체로 복원하는 과정입니다.
+1번 혹은 2번 방법을 사용해 만든 싱글턴 클래스를 직렬화하려면 단순히 Serializable을 구현한다고 선언하는 것만으로는 부족합니다.
+모든 인스턴스 필드를 transient로 선언하고 readResolve() 메서드를 제공해야 합니다.
+
+readResolve() 메서드란?
+자바의 직렬화 메커니즘에서 제공되는 역직렬화 후 호출되는 특수 메서드입니다.
+역직렬화된 객체 대신 다른 객체를 반환할 수 있습니다.
+싱글턴 클래스에서 readResolve() 메서드를 구현하면, 역직렬화 시 항상 기존의 싱글턴 인스턴스(INSTANCE)를 반환하도록 설정할 수 있습니다.
+java
+
+복사
+private Object readResolve() {
+    //'진짜' Elvis를 반환, 가짜 Elvis는 가비지 컬렉터에 맡김
+    return INSTANCE;
+}
+문제의 발생 메커니즘
+싱글턴 클래스의 인스턴스를 직렬화하여 파일에 저장합니다.
+저장된 파일을 읽어 역직렬화를 수행합니다.
+자바의 기본 역직렬화 메커니즘은 새로운 객체를 생성합니다.
+클래스의 private 생성자를 무시하고, 기존 인스턴스와는 별개의 새로운 객체를 만듭니다.
+결과적으로, 싱글턴 클래스의 새로운 인스턴스가 만들어집니다.
+java
+
+복사
+import java.io.*;
+
+public class SingletonDemo implements Serializable {
+    public static final SingletonDemo INSTANCE = new SingletonDemo();
+
+    private SingletonDemo() {
+        System.out.println("Singleton instance created!");
+    }
+
+    public static SingletonDemo getInstance() {
+        return INSTANCE;
+    }
+
+    public void showMessage() {
+        System.out.println("Hello from Singleton!");
+    }
+}
+
+class Test {
+    public static void main(String[] args) throws Exception {
+        SingletonDemo instance1 = SingletonDemo.INSTANCE;
+
+        // 직렬화: SingletonDemo 객체를 파일로 저장
+        ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("singleton.obj"));
+        out.writeObject(instance1);
+        out.close();
+
+        // 역직렬화: 파일에서 SingletonDemo 객체를 읽어오기
+        ObjectInputStream in = new ObjectInputStream(new FileInputStream("singleton.obj"));
+        SingletonDemo instance2 = (SingletonDemo) in.readObject();
+        in.close();
+
+        // 출력: 두 객체가 동일한지 확인
+        System.out.println("Are the two instances same? " + (instance1 == instance2));
+    }
+}
+출력
+
+java
+
+복사
+Singleton instance created!
+Are the two instances same? false
+3. 원소가 하나인 열거 타입을 선언
+java
+
+복사
+public enum Elvis {
+    INSTANCE;
+    
+    public void leaveTheBuilding() { ... }
+}
+🍀 장점
+간결함.
+추가 노력 없이 직렬화할 수 있음.
+아주 복잡한 직렬화 상황이나 리플렉션 공격에서도 제2의 인스턴스가 생기는 일을 완벽히 막아줌.
+⚠️ 예외
+만들려는 싱글턴이 Enum 외의 클래스를 상속해야 한다면 이 방법은 사용할 수 없습니다.
+
+💡 대부분의 상황에서는 원소가 하나뿐인 열거 타입이 싱글턴을 만드는 가장 좋은 방법입니다.
