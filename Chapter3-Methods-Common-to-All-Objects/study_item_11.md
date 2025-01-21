@@ -1,0 +1,117 @@
+### equals를 재정의하려거든 hashCode도 재정의하라
+
+이전, 아이템 10장에서는 equals를 재정의할 때 일반 규약을 지켜 재정의하도록 유도하고 있다.
+
+그리고 이번 장은 equals를 재정의할 때 함께 재정의해야하는 메서드인 hashCode에 대해 설명하고 있다.
+
+<aside>
+💡
+
+equals와 hashCode란?
+
+모든 클래스의 부모격인 Object 클래스에 equals, hashCode 메서드가 정의되어있고, 그렇기 때문에 Java 내의 모든 클래스는 이 두 함수를 상속받고 있다.
+
+equals(Object obj) 메서드는 두 객체의 동일 여부를 판단하기 위해 사용된다.
+
+hashCode() 메서드는 객체의 hash값을 반환하며, 해시테이블에서 객체를 효율적으로 저장, 조회하기 위해 사용된다.
+
+</aside>
+
+<img width="700" alt="Image" src="https://github.com/user-attachments/assets/43cfbf3f-695e-40f0-8839-303ce633880d" />
+
+hashCode의 주석을 바탕으로 조금 더 자세히 알아보게 되면
+
+1. 동일한 객체에서 여러번 hashCode()를 호출하더라도 equals() 비교에 영향을 미치는 정보가 변경되지 않는 한 항상 같은 정수값을 반환해야한다.(애플리케이션을 재실행시 값은 달라질 수 있음)
+2. 두 객체가 equals 메서드에 따라 동등하다면, 두 객체의 hashCode() 메서드의 반환값은 동일해야 한다.
+3. equals 메서드에 따라 동등하지 않더라도 두 객체의 hashCode() 값이 다를 필요는 없지만, 구별된 정수값을 반환하는 것이 해시 테이블의 성능을 향상시킬 수 있다.
+4. native 함수, 즉 다른 언어로 구현된 메서드를 호출하며, 실제 구현은 JVM 내부에 위치하게 된다.(기본으로는 객체의 메모리 주소를 기반으로 고유값을 반환하도록 되어있다.)
+
+이를 보았을 때, hashCode()를 잘못 재정의할 경우 발생하는 문제는 두번째 조항이다.
+
+즉, 논리적으로 같은 객체는 같은 해시코드를 반환해야 한다.
+
+논리적으로 같은 두 객체에 대해서 equals 메서드는 값을 비교함을 통해 논리적으로 같다 할 수 있지만, hashCode 메서드를 호출했을 때의 결과는 다른 값을 반환한다.(두 객체의 메모리 주소는 다르기 때문)
+
+해시테이블(HashMap, HashSet)에 대해서 <Key,Value> 쌍으로 저장을 할 때, Key에 객체로 저장하더라도, 객체의 hashCode()를 통해 해시 값을 계산하고, 해당 값을 Key로 사용하여 저장하게 된다.
+
+<img width="500" alt="Image" src="https://github.com/user-attachments/assets/7dcaa0b9-cfd6-4176-9e5b-cc84ce16723c" />
+
+<img width="1100" alt="Image" src="https://github.com/user-attachments/assets/da1cc8ec-d289-4f3a-b365-a0ba4a588b6b" />
+
+위처럼 하나의 해시테이블을 만들고, PhoneNumber 객체를 만들어 저장 후, 같은 값을 가진 PhoneNumber 객체로 조회를 하게 되면 null을 반환하게 된다.
+
+hashCode()의 결과값은 저장할 때 사용된 객체와 조회에 사용된 객체가 서로 다르기 때문이다.
+
+이러한 문제를 해결하기 위해서 우리는 논리적으로 같은 값을 가지는 경우(equals가 true인 경우) 같은 hashCode() 값을 반환하도록 해야 한다.
+
+### hashCode()를 작성할 때 참고사항
+
+- 다른 필드로부터 계산해낼 수 있는 필드는 무시해도 된다.
+- equals 비교에 사용되지 않은 필드는 반드시 제외해야 한다.(만약 제외하지 않을 경우 두번째 조항에 위배될 위험이 존재한다.)
+- 해시 충돌이 적은 방법을 써야하는 경우 Guava 라이브러리를 사용할 수 있다.
+
+위 내용을 바탕으로 equals와 hashCode 메서드를 재정의해보았다.
+
+```java
+@Override
+public boolean equals(Object obj) {
+    if(!(obj instanceof  PhoneNumber)) return false;
+    if(!area.equals(((PhoneNumber) obj).area)) return false;
+    if(!prefix.equals(((PhoneNumber) obj).prefix)) return false;
+    if(!lineNum.equals(((PhoneNumber) obj).lineNum)) return false;
+    return true;
+}
+
+@Override
+public int hashCode() {
+    return Objects.hash(area,prefix,lineNum);
+}
+```
+
+이를 바탕으로 위 main함수를 다시 실행해보면 어떻게 나올까?
+
+<img width="350" alt="Image" src="https://github.com/user-attachments/assets/54c92f4c-543a-470b-9cc1-4ab9089ffbc1" />
+
+이번에는 의도했던 대로 “안녕” 이라는 결과가 출력되었다.
+
+다만, 위 코드에서 문제점은 Objects클래스의 static 메서드인 hash 함수는 속도가 느리다. 입력 인수를 담기 위한 배열이 만들어진 후 입력 중 기본 타입이 있다면 박싱과 언박싱 과정을 수행해야 하기 때문이다.
+
+클래스가 불변이고, 해시코드를 계산하는 비용이 클 경우, 값을 캐싱하는 방식을 고려해야 한다.
+
+서적에서는 아래와 같은 예시를 통해 캐싱하는 과정을 보여주고 있다.
+
+```java
+private int hashCode;//생성 시 자동으로 0으로 초기화한다.
+
+@Override
+public int hashCode(){
+	int result = hashCode;
+	if(result == 0){
+		result = Short.hashCode(area);
+		result = 31 * result + Short.hashCode(prefix);
+		result = 31 * result + Short.hashCode(lineNum);
+		hashCode = result;
+	}
+	return result;
+}
+```
+
+이러한 과정을 통해 한번 계산된 hash값은 다시 계산할 필요 없이 재사용할 수 있도록 캐싱하고 있다.
+
+하지만, 성능을 높이기 위해서 해시코드를 계산할 때, 핵심필드를 생략해서는 안된다.
+
+속도는 빨라지겠지만, 해시 품질이 나빠져 해시테이블의 성능을 심각하게 저하할 수 있기 때문이다.
+
+<img width="500" alt="Image" src="https://github.com/user-attachments/assets/59692f3d-ab26-4a4a-b0c4-8c99e46d4b01" />
+
+위 함수는 String 클래스의 hashCode의 재정의 방식이다.
+
+뿐만 아니라 Integer, Long 등 자바 라이브러리의 많은 클래스가 적절한 알고리즘에 의해 hashCode를 재정의해두었음을 확인할 수 있다.
+
+### 정리
+
+equals를 재정의할 때는 hashCode를 함께 재정의해야 한다.
+
+서로 동등한 인스턴스라면 hashCode의 값이 같아야 한다.
+
+hash값은 특정 영역에 몰리지 않고 고르게 퍼트려줄 수 있는 값을 택해야 한다.(한곳으로 몰리게 되면 해시테이블의 성능이 저하될 수 있기 때문)
