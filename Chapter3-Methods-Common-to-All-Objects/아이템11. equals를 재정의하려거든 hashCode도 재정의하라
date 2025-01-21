@@ -7,7 +7,7 @@
 <aside>
 💡
 
-equals와 hashCode란?
+#### equals와 hashCode란?
 
 모든 클래스의 부모격인 Object 클래스에 equals, hashCode 메서드가 정의되어있고, 그렇기 때문에 Java 내의 모든 클래스는 이 두 함수를 상속받고 있다.
 
