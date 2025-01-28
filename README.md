@@ -12,6 +12,7 @@
 - [아이템10. equals는 일반 규약을 지켜 재정의하라](https://github.com/kakao-tech-study/Effective-Java/blob/main/Chapter3-Methods-Common-to-All-Objects/%EC%95%84%EC%9D%B4%ED%85%9C10.%20equals%EB%8A%94%20%EC%9D%BC%EB%B0%98%20%EA%B7%9C%EC%95%BD%EC%9D%84%20%EC%A7%80%EC%BC%9C%20%EC%9E%AC%EC%A0%95%EC%9D%98%ED%95%98%EB%9D%BC.md)
 - [아이템11. equals를 재정의하려거든 hashCode도 재정의하라](https://github.com/kakao-tech-study/Effective-Java/blob/main/Chapter3-Methods-Common-to-All-Objects/%EC%95%84%EC%9D%B4%ED%85%9C11.%20equals%EB%A5%BC%20%EC%9E%AC%EC%A0%95%EC%9D%98%ED%95%98%EB%A0%A4%EA%B1%B0%EB%93%A0%20hashCode%EB%8F%84%20%EC%9E%AC%EC%A0%95%EC%9D%98%ED%95%98%EB%9D%BC.md)
 - [아이템12. toString을 항상 재정의하라.](https://github.com/kakao-tech-study/Effective-Java/blob/main/Chapter3-Methods-Common-to-All-Objects/%EC%95%84%EC%9D%B4%ED%85%9C12.%20toString%EC%9D%84%20%ED%95%AD%EC%83%81%20%EC%9E%AC%EC%A0%95%EC%9D%98%ED%95%98%EB%9D%BC.md)
+- [아이템15. 클래스와 멤버의 접근 권한을 최소화하라](https://github.com/kakao-tech-study/Effective-Java/blob/main/Chapter3-Methods-Common-to-All-Objects/%EC%95%84%EC%9D%B4%ED%85%9C15.%20%ED%81%B4%EB%9E%98%EC%8A%A4%EC%99%80%20%EB%A9%A4%EB%B2%84%EC%9D%98%20%EC%A0%91%EA%B7%BC%20%EA%B6%8C%ED%95%9C%EC%9D%84%20%EC%B5%9C%EC%86%8C%ED%99%94%ED%95%98%EB%9D%BC.md)
 
 ## 🧑‍🤝‍🧑 팀원 소개
 <div >
