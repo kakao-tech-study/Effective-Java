@@ -1,0 +1,148 @@
+# 아이템14. Comparable을 구현할지 고민하라
+
+```
+개인적으로 Comparable를 어떻게 라는 표현이 들어가야할 것 같아요ㅎ
+```
+
+## CompareTo 이란??
+`CompareTo`메서드는 함수형 인터페이스의 Comparable의 추상 메서드로 동치성, 순서를 비교하는 메서드이다.
+같으면 0, 크면 양의 정수, 작으면 음의 정수를 반환한다.
+
+결국 CompareTo를 구현했다는 것은 해당 클래스가 순서가 있는 클래스라는 것을 뜻한다.
+
+> CompareTo는 Comparable의 메서드로서, 이를 구현했다는 것은 해당 클래스가 Comparable의 구현체라는 뜻이다.
+
+## CompareTo 메서드 규칙
+
+# CompareTo 메서드의 4가지 규약
+
+| 규약 | 설명 | 수학적 표현 |
+|------|------|-------------|
+| **대칭성** | 두 객체 참조의 순서를 바꿔 비교해도 예상한 결과가 나와야 함 | `x.compareTo(y) == -(y.compareTo(x))` |
+| **추이성** | 첫 번째가 두 번째보다 크고 두 번째가 세 번째보다 크면, 첫 번째는 세 번째보다 커야 함 | `x.compareTo(y) > 0 && y.compareTo(z) > 0` 이면 `x.compareTo(z) > 0` |
+| **반사성** | 같은 객체끼리는 어느 쪽을 비교하든 같아야 함 | `x.compareTo(y) == 0` 이면 `sgn(x.compareTo(z)) == sgn(y.compareTo(z))` |
+| **equals 일관성** | equals와 일관되게 작동해야 함 (권장사항) | `(x.compareTo(y) == 0) == (x.equals(y))` |
+
+> Note: `sgn`는 부호 함수로 음수면 -1, 0이면 0, 양수면 1을 반환합니다.
+### 상속관계에서의 `CompareTo` 규약을 지키는 방법
+> 컴포지션과 뷰 메서드를 제공한다.
+
+저번 equals 규약에서와 비슷하게 Comparable의 구현체를 다시한번 상속하는 경우에는 해당 규약을 지킬 수 없다.
+따라서 이런 경우에는 상속이 아닌 컴포지션을 사용한다.
+
+### 권장사항인 `equals 일관성`
+이를 지킨다면, CompareTo로 정렬한 결과와 equals를 이용한 결과가 동일하게 된다.
+지켜야하는 이유는 CompareTo를 사용하는 클래스와 equals를 사용하는 클래스가 각각 존재하기 때문이다.
+
+`TreeSet`은 `compareTo`를 이용하지만 `HashSet`은 `equals`를 사용한다.
+따라서 의도하지 않았지만 사용하는 컬렉션에 따라 다른 결과가 나오게 된다.
+
+> 잘못된 예시
+>```java
+>BigDecimal bd1 = new BigDecimal("1.0");
+>BigDecimal bd2 = new BigDecimal("1.00");
+>
+>Set<BigDecimal> hashSet = new HashSet<>();
+>
+>hashSet.add(bd1);
+>hashSet.add(bd2);
+>
+>System.out.println(hashSet.size());  // 2 출력 (equals 사용)
+>
+>Set<BigDecimal> treeSet = new TreeSet<>();
+>treeSet.add(bd1);
+>treeSet.add(bd2);
+>
+>System.out.println(treeSet.size());  // 1 출력 (compareTo 사용)
+>```
+
+
+## CompareTo의 메서드의 구현 방법
+1. 필드의 중요도 순으로 비교
+2. 순서가 결정 된 시점에 바로 끝낸다.
+3. Comparator를 이용해 비교자 생성 메서드 방식을 사용한다.
+
+```java
+@FunctionalInterface
+public interface Comparable<T> {
+    int compareTo(T o); //위에서 말했다시피 정수를 반환하는 것을 알 수 있다.
+}
+```
+#### 예시 코드
+        
+```java
+public class PhoneNumber implements Comparator<PhoneNumber> {
+
+    //직접 compareTo를 오버라이딩하는 것이 아니라 Comparator객체를 내부로 가진채로 구현
+    private static final Comparator<PhoneNumber> COMPARATOR =
+            Comparator.comparingInt((PhoneNumber phoneNumber) -> phoneNumber.areaCode)
+                    .thenComparingInt(phoneNumber -> phoneNumber.prefix)
+                    .thenComparingInt(phoneNumber -> phoneNumber.lineNum);
+
+    private final short areaCode;
+    private final short prefix;
+    private final short lineNum;
+
+    // compareTo에서 컴포지션한 Comparator를 사용
+    public int compareTo(PhoneNumber phoneNumber) {
+        return COMPARATOR.compare(this, phoneNumber);
+    }
+}
+```
+
+### Comparator를 이용한 비교자 생성 메서드 방식
+위 코드를 보면 특이하게 `compareTo`를 직접 정의하는 것이 아니라
+함수형 인터페이스인 Comparator를 람다식을 이용해 객체를 생성하고 해당 객체를 활용하는 것을 볼 수 있다.
+
+> Comparator 코드
+>```java
+>@FunctionalInterface
+>public interface Comparator<T> {
+>    int compare(T o1, T o2);
+>}
+>```
+
+`Compare`의 반환값과 `compareTo` 반환값 모두 int형인 것을 알 수 있는데, 이를 이용해  `compareTo`를 재정의하는 것이다.
+
+이 방식의 이점은 Comparator 인터페이스가 제공하는 static 메서드를 이용할 수 있다는 것이다. (아래참조!)   
+개발자는 직접 `<`,`>`등의 연산자를 쓰지 않고 이미 정의된 메서드를 체이닝 기법으로 이용할 수 있으며 깔끔한 코드를 유지할 수 있다. 
+
+이 방식의 장점은 코드의 유연성과 가독성, 유지보수성을 향상시킬 수 있다는 장점이있다.
+
+> 직접 구현한 경우와 비교자 생성 메서드 방식의 비교
+>```java
+>// 직접 구현할 경우
+>public int compareTo(PhoneNumber pn) {
+>        int result = Short.compare(areaCode, pn.areaCode);
+>        if (result == 0) {
+>        result = Short.compare(prefix, pn.prefix);
+>        if (result == 0)
+>        result = Short.compare(lineNum, pn.lineNum);
+>        }
+>        return result;
+>        }
+>
+>// Comparator 사용할 경우
+>private static final Comparator<PhoneNumber> COMPARATOR =
+>        Comparator.comparingInt(pn -> pn.areaCode)
+>        .thenComparingInt(pn -> pn.prefix)
+>        .thenComparingInt(pn -> pn.lineNum);
+>
+>public int compareTo(PhoneNumber pn) {
+>        return COMPARATOR.compare(this, pn);
+>        }
+>```
+
+
+
+### Comparator의 여러 static 메서드
+| 메서드 | 설명 | 예시 |
+|--------|------|------|
+| **comparing()** | 키 추출자를 받아 객체 참조 비교 | `Comparator.comparing(Person::getName)` |
+| **comparingInt()** | int 값 추출 후 비교 | `Comparator.comparingInt(Person::getAge)` |
+| **comparingLong()** | long 값 추출 후 비교 | `Comparator.comparingLong(Person::getSalary)` |
+| **comparingDouble()** | double 값 추출 후 비교 | `Comparator.comparingDouble(Person::getHeight)` |
+| **naturalOrder()** | Comparable 구현체의 자연적 순서 | `Comparator.naturalOrder()` |
+| **reverseOrder()** | naturalOrder의 역순 | `Comparator.reverseOrder()` |
+| **nullsFirst()** | null을 맨 앞으로 | `Comparator.nullsFirst(naturalOrder())` |
+| **nullsLast()** | null을 맨 뒤로 | `Comparator.nullsLast(naturalOrder())` |
